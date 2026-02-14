@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Maestro de Viaje 2026 | Comparador Interactivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f4; /* Stone 100 */
+            color: #44403c; /* Stone 700 */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e7e5e4;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #a8a29e;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #78716c;
+        }
+
+        /* Chart Container Strict Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Card Hover Effects */
+        .dest-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .dest-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Timeline Styling */
+        .timeline-line {
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #d6d3d1;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="bg-stone-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-stone-800 tracking-tight">✈️ Plan Maestro 2026</h1>
+                <p class="text-sm text-stone-500">Comparador para Grupo de 6 | Salida: Málaga | Septiembre</p>
+            </div>
+            <button onclick="scrollToSection('dashboard')" class="text-sm font-semibold text-orange-600 hover:text-orange-700 hidden sm:block">
+                Ver Análisis de Datos
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-12">
+
+        <!-- Intro Text -->
+        <section>
+            <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded shadow-sm">
+                <p class="text-stone-700">
+                    <strong>Objetivo:</strong> Comparativa final de 10 destinos (Nacionales e Internacionales) equilibrando presupuesto, logística y experiencia para 5 adultos y 1 adolescente.
+                </p>
+            </div>
+        </section>
+
+        <!-- DASHBOARD SECTION -->
+        <section id="dashboard" class="animate-fade-in">
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-stone-800 flex items-center gap-2">
+                    📊 Análisis Estratégico
+                </h2>
+                <p class="text-stone-600 mt-2">
+                    Utiliza estos gráficos para identificar el equilibrio entre <strong>Presupuesto</strong>, <strong>Masificación</strong> y <strong>Esfuerzo Logístico</strong>.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                    <h3 class="text-lg font-semibold text-stone-700 mb-4 text-center">💰 Presupuesto vs. 👥 Masificación</h3>
+                    <div class="chart-container">
+                        <canvas id="scatterChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-stone-400 mt-2">Abajo a la izquierda = Más barato y menos gente (Sweet Spot)</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                    <h3 class="text-lg font-semibold text-stone-700 mb-4 text-center">✈️ Coste Transporte vs. 🏨 Estancia</h3>
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-stone-400 mt-2">Comparativa de gasto medio por persona</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- DESTINATION EXPLORER -->
+        <section id="explorer">
+            <div class="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-stone-800">🌍 Explorador de Destinos</h2>
+                    <p class="text-sm text-stone-500">Selecciona una tarjeta para ver el Itinerario Detallado y Análisis.</p>
+                </div>
+                
+                <!-- Filters -->
+                <div class="flex gap-2">
+                    <select id="countryFilter" onchange="filterDestinations()" class="bg-white border border-stone-300 text-stone-700 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block p-2.5">
+                        <option value="all">Todos los Países</option>
+                        <option value="Grecia">🇬🇷 Grecia</option>
+                        <option value="España">🇪🇸 España</option>
+                        <option value="Marruecos">🇲🇦 Marruecos</option>
+                        <option value="Túnez">🇹🇳 Túnez</option>
+                    </select>
+                    <select id="vibeFilter" onchange="filterDestinations()" class="bg-white border border-stone-300 text-stone-700 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block p-2.5">
+                        <option value="all">Todo tipo de Viaje</option>
+                        <option value="Relax">🧘 Relax</option>
+                        <option value="Aventura">🎒 Aventura/Exploración</option>
+                        <option value="Familiar">🏰 Familiar/Parques</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Grid -->
+            <div id="destinationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards will be injected via JS -->
+            </div>
+        </section>
+
+        <!-- COMPARISON TABLE SECTION -->
+        <section class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+            <div class="p-6 border-b border-stone-200">
+                <h2 class="text-lg font-bold text-stone-800">📋 Tabla Comparativa Técnica</h2>
+                <p class="text-sm text-stone-500">Datos brutos para decisión final.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-stone-600">
+                    <thead class="text-xs text-stone-700 uppercase bg-stone-50">
+                        <tr>
+                            <th class="px-6 py-3">Destino</th>
+                            <th class="px-6 py-3">Perfil</th>
+                            <th class="px-6 py-3">Hotel</th>
+                            <th class="px-6 py-3 text-center">Masificación</th>
+                            <th class="px-6 py-3 text-right">Presupuesto Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonTableBody">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-800 text-stone-400 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm">Generado para la planificación de vacaciones Septiembre 2026.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-stone-900 bg-opacity-75 transition-opacity" onclick="closeModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl max-h-[90vh] flex flex-col">
+                <div class="bg-stone-50 px-4 py-3 sm:px-6 flex justify-between items-center border-b border-stone-200">
+                    <h3 class="text-xl font-bold text-stone-900" id="modalTitle">Destino</h3>
+                    <button type="button" class="text-stone-400 hover:text-stone-600" onclick="closeModal()">
+                        <span class="text-2xl">&times;</span>
+                    </button>
+                </div>
+                <div class="px-4 py-5 sm:p-6 overflow-y-auto flex-grow" id="modalContent"></div>
+                <div class="bg-stone-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-stone-200">
+                    <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-stone-900 shadow-sm ring-1 ring-inset ring-stone-300 hover:bg-stone-50 sm:mt-0 sm:w-auto" onclick="closeModal()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const destinations = [
+            {
+                id: "thassos",
+                name: "Thassos",
+                country: "Grecia",
+                emoji: "🇬🇷",
+                img: "https://images.unsplash.com/photo-1662065584924-71e22bd80538?q=80&w=1032&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                profile: "Relax real y comodidad",
+                vibe: "Relax",
+                hotel: "Royal Paradise (5★)",
+                logistics: "Vuelo escala + Ferry",
+                transportCostDisplay: "~250€ - 340€",
+                transportAvg: 295,
+                budgetDisplay: "~1.450€ - 1.700€",
+                budgetAvg: 1575,
+                crowds: 35,
+                crowdText: "Baja (35%)",
+                pros: ["Paz y relax real", "Hotel 5★ superior", "Trato personalizado"],
+                cons: ["Logística compleja (Ferry)", "Presupuesto más alto"],
+                itinerary: [
+                    { day: 1, title: "Llegada al Paraíso", desc: "Llegada, ferry y check-in en Royal Paradise.", img: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/04/44/a1/a3/royal-paradise-thassos.jpg?q=80&w=400" },
+                    { day: 2, title: "Relax Local", desc: "Playa del hotel y paseo por Potos.", img: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/10/d2/5e/7c/aerial-photographs-beach.jpg?q=80&w=400" },
+                    { day: 3, title: "Giola", desc: "Visita a la piscina natural de Giola.", img: "https://e8d7293a.delivery.rocketcdn.me/wp-content/uploads/2022/08/LagunadeGiola.jpg?q=80&w=400" },
+                    { day: 4, title: "Tradición", desc: "Pueblo de Panagia y cena en Limenas.", img: "https://www.go-thassos.gr/sites/default/files/pages/places/6/1369.jpg?q=80&w=400" },
+                    { day: 5, title: "Mármol y Mar", desc: "Playa de Marble Beach.", img: "https://www.shutterstock.com/image-photo/marble-beach-saliara-thassos-islands-260nw-499096072.jpg?q=80&w=400" },
+                    { day: 6, title: "Navegación", desc: "Alquiler de barco privado por las calas.", img: "https://media.tacdn.com/media/attractions-splice-spp-674x446/06/73/45/a1.jpg?q=80&w=400" },
+                    { day: 7, title: "Despedida", desc: "Compras de miel local y regreso.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxFwXg9B4bF5ABEMwAnffm9soswNQ3_9xg_Q&s/?q=80&w=400" }
+                ]
+            },
+            {
+                id: "lefkada",
+                name: "Lefkada",
+                country: "Grecia",
+                emoji: "🇬🇷",
+                img: "https://www.ionianblue.gr/cache/files/96b7722e1e011607a2bb698dbab8d27c55fbf9d7.jpg",
+                profile: "Paisajes y exploración",
+                vibe: "Aventura",
+                hotel: "Ionian Blue Resort (5★)",
+                logistics: "Vuelo escala + Coche",
+                transportCostDisplay: "~230€ - 380€",
+                transportAvg: 305,
+                budgetDisplay: "~1.350€ - 1.650€",
+                budgetAvg: 1500,
+                crowds: 55,
+                crowdText: "Media (55%)",
+                pros: ["Playas espectaculares (Porto Katsiki)", "Paisajes impresionantes"],
+                cons: ["Requiere mucha movilidad/coche", "Hotel irregular"],
+                itinerary: [
+                    { day: 1, title: "Llegada Jónica", desc: "Llegada a Preveza y check-in en Ionian Blue.", img: "https://images.trvl-media.com/place/2912/f92aa0c4-7cc5-40e8-87ec-299ffeebfcd1.jpg?q=80&w=400" },
+                    { day: 2, title: "Icono", desc: "Porto Katsiki y faro de Cabo Lefkatas.", img: "https://i.content4travel.com/seeplaces/temp/5f7f9032-db08-4e87-b8a2-44239783851b.jpg?q=80&w=400" },
+                    { day: 3, title: "Naturaleza", desc: "Visita a Nidri y cascadas de Dimosari.", img: "https://sail2day.com/wp-content/uploads/2020/10/lefkada-waterfalls-of-nydri-dimosari.jpg?q=80&w=400" },
+                    { day: 4, title: "Crucero", desc: "Crucero de día completo a islas vecinas.", img: "https://media.tacdn.com/media/attractions-splice-spp-674x446/06/73/25/d4.jpg?q=80&w=400" },
+                    { day: 5, title: "Egremni", desc: "Playa de Egremni y pueblo de Agios Nikitas.", img: "https://images.trvl-media.com/place/6232844/a0a14f07-66b9-4a29-ba42-e238e3ea2d4a.jpg?q=80&w=400" },
+                    { day: 6, title: "Deporte", desc: "Kayak en la bahía de Vasiliki.", img: "https://media-cdn.tripadvisor.com/media/attractions-splice-spp-674x446/0f/26/8a/82.jpg?q=80&w=400" },
+                    { day: 7, title: "Regreso", desc: "Paseo por Lefkas Town y salida.", img: "https://images.prismic.io/villaplus/65907d48-ab8f-4c52-b90e-f52b611fb5fb_LF+-+Lefkada+Town+%282%29.jpeg?auto=compress,format&rect=0,595,9168,2478&w=1110&h=300?q=80&w=400" }
+                ]
+            },
+            {
+                id: "tenerife",
+                name: "Tenerife",
+                country: "España",
+                emoji: "🇪🇸",
+                img: "https://www.bahia-principe.com/content/image/g/1418245178541/fantasia-tenerife-views-1.jpg",
+                profile: "Fantasía y Lujo Familiar",
+                vibe: "Familiar",
+                hotel: "B. Principe Fantasia (5★)",
+                logistics: "Vuelo Directo (2h 30')",
+                transportCostDisplay: "~80€ - 180€",
+                transportAvg: 130,
+                budgetDisplay: "~1.380€",
+                budgetAvg: 1380,
+                crowds: 95,
+                crowdText: "Muy Alta (95%)",
+                pros: ["Logística cómoda (Vuelo Directo)", "Hotel temático ideal adolescentes"],
+                cons: ["Masificación muy alta", "Destino menos 'exótico'"],
+                itinerary: [
+                    { day: 1, title: "Bienvenida Real", desc: "Llegada y cena temática en el hotel.", img: "https://www.bahia-principe.com/content/image/m/1418272274143/papimber5.jpg?q=80&w=400" },
+                    { day: 2, title: "Aquapark Hotel", desc: "Disfrute de parques acuáticos del hotel.", img: "https://gacetadelturismo.com/wp-content/uploads/sites/8/2022/02/bahia-principe-fantasia-tenerife-hotel-tobogan-1024x683.jpg?q=80&w=400" },
+                    { day: 3, title: "Volcán", desc: "Excursión al Teide.", img: "https://cdn.nattivus.com/img/actividades/espana/tenerife/679_tour_teide_desde_santa_cruz/tour-teide-desde-santa-cruz-A.jpg?q=80&w=400" },
+                    { day: 4, title: "Siam Park", desc: "Día completo en el mejor parque acuático.", img: "https://static.hosteltur.com/app/public/uploads/img/articles/2018/07/25/L_144239_l-5b1504e7b1ce4-dinopolis-10-parques-de-atraccione.jpg?q=80&w=400" },
+                    { day: 5, title: "Cetáceos", desc: "Avistamiento de cetáceos en catamarán.", img: "https://media-cdn.tripadvisor.com/media/attractions-splice-spp-674x446/06/70/7c/9d.jpg?q=80&w=400" },
+                    { day: 6, title: "Loro Parque", desc: "Visita a Loro Parque.", img: "https://es.travelon.world/images/econa/fields/1/com_content_article/369/loro-parque-day-trip-package_l_L.jpg?q=80&w=400" },
+                    { day: 7, title: "Vuelta", desc: "Desayuno buffet y salida.", img: "https://images.trvl-media.com/lodging/2000000/1070000/1061200/1061154/74a6f09b.jpg?impolicy=resizecrop&rw=575&rh=575&ra=fill?q=80&w=400" }
+                ]
+            },
+            {
+                id: "agadir",
+                name: "Agadir",
+                country: "Marruecos",
+                emoji: "🇲🇦",
+                img: "https://www.riu.com/dam/02-RIU-Espanol/Building-Blocks/04-Paises/07-Marruecos/01-Agadir/04-Riu-Palace-Tikida-Agadir/Imagenes/010-Vista-Aerea/aerea-xta-3.jpg",
+                profile: "Relax exótico y lujo",
+                vibe: "Relax",
+                hotel: "Riu Palace Tikida (5★)",
+                logistics: "Vuelo Directo + Van",
+                transportCostDisplay: "~40€ - 220€",
+                transportAvg: 130,
+                budgetDisplay: "~1.175€",
+                budgetAvg: 1175,
+                crowds: 40,
+                crowdText: "Baja (40%)",
+                pros: ["Calidad/Precio TI 24h", "Vuelo directo corto", "Poca gente"],
+                cons: ["Traslado largo (2h 45m)", "Clima brumoso a veces"],
+                itinerary: [
+                    { day: 1, title: "Llegada Marrakech", desc: "Llegada y transfer VIP a Agadir.", img: "https://transfers.ma/wp-content/uploads/2025/09/ChatGPT-Image-Sep-4_-2025_-02_41_56-PM-1024x683.webp?q=80&w=400" },
+                    { day: 2, title: "Todo Incluido", desc: "Día de relax TI 24h y playa privada.", img: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/2c/b0/c2/4f/private-beach-hotels.jpg?q=80&w=400" },
+                    { day: 3, title: "Panorámica", desc: "Teleférico a la Kasbah Oufella.", img: "https://cdn.getyourguide.com/image/format=auto,fit=crop,gravity=center,quality=60,width=400,height=265,dpr=2/tour_img/bc3883b40b2601a1dff1bffa9a00592c30fa5b94e24d6130a2aa732f2268a0c9.jpg?q=80&w=400" },
+                    { day: 4, title: "Oasis", desc: "Excursión al Valle del Paraíso.", img: "https://elblog.bintercanarias.com/hs-fs/hubfs/paradise%20valley%20agadir.jpg?width=853&height=640&name=paradise%20valley%20agadir.jpg?q=80&w=400" },
+                    { day: 5, title: "Souk", desc: "Compras en el Souk El Had.", img: "https://immersi-travel.com/wp-content/uploads/2023/07/Souk-el-had-agadir-allee-marchande.jpg?q=80&w=400" },
+                    { day: 6, title: "Cultura/Surf", desc: "Visita a Taroudant o surf en Taghazout.", img: "https://cdn.sanity.io/images/we0tdimr/production/e8c5fa8bcc7ba7b6580ce5b4b303d46f924b869a-3840x2562.jpg?q=80&w=400" },
+                    { day: 7, title: "Regreso", desc: "Último baño y regreso.", img: "https://www.golfandmore.com/wp-content/uploads/2024/09/hotel-riu-palace-tikida-taghazout-all-inclusive-picture.jpg?q=80&w=400" }
+                ]
+            },
+            {
+                id: "spetri",
+                name: "Sancti Petri",
+                country: "España",
+                emoji: "🇪🇸",
+                img: "https://apiimg.iberostar.com/uploads/image/67646/crops/16:9/1920/image.jpeg",
+                profile: "Exclusividad y Silencio",
+                vibe: "Relax",
+                hotel: "Iberostar Andalucía (5★)",
+                logistics: "Coche (2h 15')",
+                transportCostDisplay: "~10€ - 15€",
+                transportAvg: 12.5,
+                budgetDisplay: "~1.150€",
+                budgetAvg: 1150,
+                crowds: 55,
+                crowdText: "Media (55%)",
+                pros: ["Exclusividad y gastronomía", "Cerca de Málaga"],
+                cons: ["Demasiado tranquilo para adolescentes", "Caro para ser nacional"],
+                itinerary: [
+                    { day: 1, title: "Costa de la Luz", desc: "Trayecto en coche y Playa de la Barrosa.", img: "https://www.hipotels.com/content/thumbs/640/content/imgsxml/panel_slideinterior/hotel-sensimarplayabarrosa-portada3848.jpg?q=80&w=400" },
+                    { day: 2, title: "Música y Sol", desc: "Relax y atardecer con música.", img: "https://static.grupojoly.com/clip/e0b8bab4-0dd8-4f2f-bbe5-66715acb75b8_source-aspect-ratio_1600w_0.jpg?q=80&w=400" },
+                    { day: 3, title: "Tacita de Plata", desc: "Excursión a Cádiz capital.", img: "https://viajes.chavetas.es/wp-content/uploads/albums/mipais/excursionesencadiz03.jpg?q=80&w=400" },
+                    { day: 4, title: "Vino y Pueblos", desc: "Bodegas en Jerez o Vejer de la Frontera.", img: "https://i0.wp.com/explorelatierra.com/wp-content/uploads/2019/08/Feature-foto-solera-de-Bodegas-merito-diez-Jerez-de-la-Frontera-Explore-la-Tierra-1.jpg?q=80&w=400" },
+                    { day: 5, title: "Historia y Spa", desc: "Castillo de Sancti Petri y Spa.", img: "https://www.lacostadecadiz.com/wp-content/uploads/2020/04/Sancti-Petri-02-1170x780.jpg?q=80&w=400" },
+                    { day: 6, title: "Calas", desc: "Playas de Conil.", img: "https://conilhome.com/wp-content/uploads/2021/06/cala-del-aceite-en-conil-junto-al-puerto-pesquero_800x600.jpg?q=80&w=400" },
+                    { day: 7, title: "Regreso", desc: "Regreso a Málaga.", img: "https://www.viajarconhijos.es/wp-content/uploads/2025/07/pexels-ricfer-3263261-5104046.jpg?q=80&w=400" }
+                ]
+            },
+            {
+                id: "benidorm",
+                name: "Benidorm",
+                country: "España",
+                emoji: "🇪🇸",
+                img: "https://images.trvl-media.com/lodging/10000000/9720000/9710700/9710686/89206a1c.jpg?impolicy=resizecrop&rw=575&rh=575&ra=fill",
+                profile: "Safari y Parques",
+                vibe: "Familiar",
+                hotel: "Magic Natura (4★)",
+                logistics: "Coche (4h 30')",
+                transportCostDisplay: "~25€ - 35€",
+                transportAvg: 30,
+                budgetDisplay: "~1.100€",
+                budgetAvg: 1100,
+                crowds: 80,
+                crowdText: "Alta (80%)",
+                pros: ["Dormir entre animales", "Acceso directo parques temáticos"],
+                cons: ["Masificación alta", "Trayecto coche largo"],
+                itinerary: [
+                    { day: 1, title: "Llegada Safari", desc: "Viaje en coche y check-in en Cabaña.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZlTrAL_2B6XJxPs_J9pSGHMXLsSZXedKQ8Q&s?q=80&w=400" },
+                    { day: 2, title: "Zoo y Agua", desc: "Terra Natura y Aqua Natura.", img: "https://y.cdrst.com/cdrimg/oferta/7096/1920x400/max-width/e26a44.jpg?q=80&w=400" },
+                    { day: 3, title: "Naturaleza", desc: "Fuentes del Algar y Guadalest.", img: "https://siempreruedasymotor.com/wp-content/uploads/2012/08/02-Fuentes-del-Algar-02.jpg?q=80&w=400" },
+                    { day: 4, title: "Adrenalina", desc: "Terra Mítica.", img: "https://excursionesbenidorm.com/images/stories/terra-mitica/portada-Terra-Mitica.jpg?q=80&w=400" },
+                    { day: 5, title: "Playa", desc: "Relax en Playa de Poniente.", img: "https://multimedia.comunitatvalenciana.com/F94D3F07B5BF4A7A8DB7B58A9E49BF6E/img/655C8CA97EBC41888DBBC035DADD6261/D_C_BND_PP_T_Mike_Pan_17012-3_b.jpg?q=80&w=400" },
+                    { day: 6, title: "Tapas", desc: "Tapa por el centro de Benidorm.", img: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0e/ca/1e/72/und-da-bilder-gerade.jpg?q=80&w=400" },
+                    { day: 7, title: "Regreso", desc: "Desayuno con vistas al safari y regreso.", img: "https://magicnatura.benidorm-hotels.net/data/Pics/OriginalPhoto/4659/465994/465994782/magic-natura-resort-benidorm-pic-65.JPEG?q=80&w=400" }
+                ]
+            },
+            {
+                id: "hammamet",
+                name: "Hammamet",
+                country: "Túnez",
+                emoji: "🇹🇳",
+                img: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/21/7b/ab/3e/iberostar-averroes.jpg?w=900&h=500&s=1",
+                profile: "Sol e historia",
+                vibe: "Familiar",
+                hotel: "Iberostar Averroes (4★)",
+                logistics: "Vuelo escala (4h+)",
+                transportCostDisplay: "~280€ - 350€",
+                transportAvg: 315,
+                budgetDisplay: "~1.035€",
+                budgetAvg: 1035,
+                crowds: 50,
+                crowdText: "Media (50%)",
+                pros: ["Opción internacional económica", "Aguas cálidas"],
+                cons: ["Vuelo con escala", "Entorno exterior menos cuidado"],
+                itinerary: [
+                    { day: 1, title: "Llegada", desc: "Llegada al Iberostar Averroes.", img: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/3e/54/59/partie-de-piscine.jpg?q=80&w=400" },
+                    { day: 2, title: "Medina", desc: "Playa y Medina de Hammamet.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRd7ueeIxDusN55InMwPmw1pevx_lyeeLxCdw&s?q=80&w=400" },
+                    { day: 3, title: "Azul y Blanco", desc: "Túnez capital y Sidi Bou Said.", img: "https://media-cdn.tripadvisor.com/media/attractions-splice-spp-674x446/10/04/16/26.jpg?q=80&w=400" },
+                    { day: 4, title: "Diversión", desc: "Parque Carthage Land.", img: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgk4Q_onPWuBhdMAJvlN0boFlqDxKgF91_OiSVnUhADNPEIaiJTo_DFS2damEcWwUFyan-n_QbsvNuBsfNFogwsq3Zu6HwVYPSyca6KxmmQ7LZ-gOqYvSPsk8oy7rpVsXfn7SFrQpVMfIA/s1600/10428255_631038276980753_846239486100475904_o.jpg?q=80&w=400" },
+                    { day: 5, title: "Roma", desc: "Ruinas romanas de Cartago.", img: "https://destinoysabor.com/blog/wp-content/uploads/2018/05/Ruinas-de-Cartago.jpg?q=80&w=400" },
+                    { day: 6, title: "Aventura", desc: "Parasailing y cena bereber.", img: "https://cdn.getyourguide.com/img/tour/09a5be2fccafddfb.jpeg/155.jpg?q=80&w=400" },
+                    { day: 7, title: "Despedida", desc: "Compras de cerámica y regreso.", img: "https://www.101viajes.com/sites/default/files/styles/guia-full/public/artesania-tunez.jpg?q=80&w=400" }
+                ]
+            },
+            {
+                id: "salou",
+                name: "Salou",
+                country: "España",
+                emoji: "🇪🇸",
+                img: "https://pro-static.h10hotels.com/gallery/T4D3/01.1_HMVHotelPool8.jpg",
+                profile: "Ocio y PortAventura",
+                vibe: "Familiar",
+                hotel: "H10 Med. Village (4★)",
+                logistics: "Vuelo BCN + Bus",
+                transportCostDisplay: "~60€ - 170€",
+                transportAvg: 115,
+                budgetDisplay: "~950€",
+                budgetAvg: 950,
+                crowds: 85,
+                crowdText: "Alta (85%)",
+                pros: ["Cercanía PortAventura", "Apartamentos amplios"],
+                cons: ["Entorno masificado", "Dependencia vuelo BCN"],
+                itinerary: [
+                    { day: 1, title: "Llegada", desc: "Vuelo a BCN y llegada al H10.", img: "https://pro-static.h10hotels.com/gallery/T11D3/05.4_HWSHotelPiscina.jpg?q=80&w=400" },
+                    { day: 2, title: "PortAventura", desc: "Día completo en el parque.", img: "https://www.laspalmeras.com/wp-content/uploads/d4ht3wfpeewzdilundo6hw4fjq.jpg?q=80&w=400" },
+                    { day: 3, title: "Historia", desc: "Playa de Levante y Tarragona Romana.", img: "https://www.espanafascinante.com/media/espanafascinante/images/2025/07/30/2025073014262516467.jpg?q=80&w=400" },
+                    { day: 4, title: "Velocidad", desc: "Ferrari Land y Aquatic Park.", img: "https://kulturaltours.com/wp-content/uploads/2017/05/ferrariland_28cc2336.png?q=80&w=400" },
+                    { day: 5, title: "Delta", desc: "Excursión al Delta del Ebro.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT69oiDRcMIEYZnTepMkdAWFh6r7_1SlTTlSQ&s?q=80&w=400" },
+                    { day: 6, title: "Caminata", desc: "Caminata por el Camino de Ronda.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEhpL9h2IE5zQoTSWLK5trYl5EaHK3d3C79w&s?q=80&w=400" },
+                    { day: 7, title: "Regreso", desc: "Paseo Jaime I y salida.", img: "https://www.salou.com/root/contenidos/1/1/5/11558/paseo-jaume-i-ltbr-gt-salou.costa-dorada-4-amp.jpg?q=80&w=400" }
+                ]
+            },
+            {
+                id: "islantilla",
+                name: "Islantilla",
+                country: "España",
+                emoji: "🇪🇸",
+                img: "https://www.vilagale.com/media/20tdnixc/vg-isla-canela-aerea-1_baixa.jpg",
+                profile: "Relax y Playa",
+                vibe: "Relax",
+                hotel: "Vila Galé I. Canela (4★)",
+                logistics: "Coche (2h 50')",
+                transportCostDisplay: "~15€ - 20€",
+                transportAvg: 17.5,
+                budgetDisplay: "~850€",
+                budgetAvg: 850,
+                crowds: 65,
+                crowdText: "Media-Alta (65%)",
+                pros: ["Playas salvajes", "Cerca Portugal", "Económico"],
+                cons: ["Ocio juvenil limitado"],
+                itinerary: [
+                    { day: 1, title: "Llegada", desc: "Llegada al Vila Galé.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYBFmPBYq2ATg65v-dhWmUsSgdgqOaIixnvkdBxni20A&s?q=80&w=400" },
+                    { day: 2, title: "Frontera", desc: "Playa y paseo por Ayamonte.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQ3GdgiRF5A-nTqOOdRddmOz5sxMUZipRIlRdW8Ka1&s?q=80&w=400" },
+                    { day: 3, title: "Portugal", desc: "Ferry a Portugal (comida en Vila Real).", img: "https://images.mnstatic.com/ea/67/ea67d1db913a293ac0c97be2d9c65897.jpg?quality=75&format=png&fit=crop&width=980&height=880&aspect_ratio=980%3A880?q=80&w=400" },
+                    { day: 4, title: "Naturaleza", desc: "Marismas del Odiel.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRjWYhwYv5fB2cCtkEAVqVCgSBtkPrNiBFwcw&s?q=80&w=400" },
+                    { day: 5, title: "Algarve", desc: "Visita a playas del Algarve.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT1EB-ZYFBqgZLPXd3AO2BNzeMhswi_20MNqw&s?q=80&w=400" },
+                    { day: 6, title: "Actividad", desc: "Paseo a caballo o Golf.", img: "https://turispain.es/wp-content/uploads/2023/02/Diseno-sin-titulo-2023-08-06T234551.257.png?q=80&w=400" },
+                    { day: 7, title: "Regreso", desc: "Regreso a Málaga.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgAp5wzGVuI3_8xkCbCe_UZ1YzHZxQUjJ6BA&s?q=80&w=400" }
+                ]
+            },
+            {
+                id: "sevilla",
+                name: "Sevilla",
+                country: "España",
+                emoji: "🇪🇸",
+                img: "https://s7g10.scene7.com/is/image/barcelo/BSEV_POOL_04:Landscape?wid=1000&hei=500&fit=crop,1&qlt=60&fmt=avif-alpha&cache=update,on,on&defaultImage=default-dm",
+                profile: "Aventura Urbana",
+                vibe: "Aventura",
+                hotel: "Barceló Renacimiento (5★)",
+                logistics: "Coche (2h 10')",
+                transportCostDisplay: "~8€ - 12€",
+                transportAvg: 10,
+                budgetDisplay: "~720€",
+                budgetAvg: 720,
+                crowds: 70,
+                crowdText: "Alta (70%)",
+                pros: ["Presupuesto más bajo", "Hotel excelente diseño"],
+                cons: ["Calor intenso", "No es playa"],
+                itinerary: [
+                    { day: 1, title: "Llegada", desc: "Llegada al Barceló Renacimiento.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9xzxyO_Ja8AmLw_1R9rvKOixpoXXCZyEetQ&s?q=80&w=400" },
+                    { day: 2, title: "Isla Mágica", desc: "Día en Isla Mágica y Agua Mágica.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMD8_gqB3GTv5WORX1eExBRZdgLhQ7-ysROQ&s?q=80&w=400" },
+                    { day: 3, title: "Historia", desc: "Alcázar y Barrio de Santa Cruz.", img: "https://media.tacdn.com/media/attractions-splice-spp-360x240/06/75/c2/d5.jpg?q=80&w=400" },
+                    { day: 4, title: "Río", desc: "Paseo en barco por el Guadalquivir.", img: "https://comiviajeros.com/wp-content/uploads/2024/02/paseo-en-barco-por-sevilla.jpg?q=80&w=400" },
+                    { day: 5, title: "Ruinas", desc: "Visita a ruinas de Itálica.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeVeYWzAAO9Gk8sSkFCODgNhvnwLjIKVbEDw&s?q=80&w=400" },
+                    { day: 6, title: "Cultura", desc: "Museos y tapas en Triana.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzSlrtkIyxyxUWcUPNWskXDSWEzgMYBFCgZA&s?q=80&w=400" },
+                    { day: 7, title: "Regreso", desc: "Desayuno y regreso.", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS5VOtJMWIOUV11vKSBH0Obw3OOUL3npIBb0XkNz3n4oA&s?q=80&w=400" }
+                ]
+            }
+        ];
+
+        function initCharts() {
+            const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+            new Chart(scatterCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Destinos',
+                        data: destinations.map(d => ({ x: d.budgetAvg, y: d.crowds, name: d.name, id: d.id })),
+                        backgroundColor: '#f97316',
+                        borderColor: '#c2410c',
+                        borderWidth: 1,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Presupuesto Medio (€)' }, min: 600 },
+                        y: { title: { display: true, text: 'Masificación (%)' }, min: 0, max: 100 }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return `${context.raw.name}: ${context.raw.x}€ / ${context.raw.y}% Ocupación`; }
+                            }
+                        },
+                        legend: { display: false }
+                    },
+                    onClick: (e, activeEls) => {
+                        if (activeEls.length > 0) {
+                            const dataIndex = activeEls[0].index;
+                            const destId = destinations[dataIndex].id;
+                            openModal(destId);
+                        }
+                    }
+                }
+            });
+
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            const sortedDest = [...destinations].sort((a, b) => b.budgetAvg - a.budgetAvg);
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: sortedDest.map(d => d.name),
+                    datasets: [
+                        { label: 'Transporte', data: sortedDest.map(d => d.transportAvg), backgroundColor: '#fca5a5', stack: 'Stack 0' },
+                        { label: 'Estancia + Otros', data: sortedDest.map(d => d.budgetAvg - d.transportAvg), backgroundColor: '#fdba74', stack: 'Stack 0' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Coste (€)' } },
+                        x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 } }
+                    }
+                }
+            });
+        }
+
+        function renderCards(filterCountry = 'all', filterVibe = 'all') {
+            const container = document.getElementById('destinationsGrid');
+            container.innerHTML = '';
+
+            destinations.forEach(dest => {
+                if (filterCountry !== 'all' && dest.country !== filterCountry) return;
+                if (filterVibe !== 'all' && dest.vibe !== filterVibe) return;
+
+                const card = document.createElement('div');
+                card.className = "dest-card bg-white rounded-xl shadow border border-stone-200 overflow-hidden flex flex-col cursor-pointer";
+                card.onclick = () => openModal(dest.id);
+
+                card.innerHTML = `
+                    <div class="h-44 w-full relative overflow-hidden">
+                        <img src="${dest.img}" alt="${dest.hotel}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                        <div class="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-[10px] font-bold text-stone-600 shadow-sm border border-stone-200">
+                            ${dest.crowdText}
+                        </div>
+                    </div>
+                    <div class="p-5 flex-grow flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-bold text-lg text-stone-800">${dest.name}</h3>
+                                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">${dest.country}</span>
+                            </div>
+                            <p class="text-xs text-stone-500 mt-1 italic">${dest.profile}</p>
+                            <div class="mt-4 space-y-1.5">
+                                <div class="flex items-center text-xs text-stone-600">
+                                    <span class="w-5 text-center mr-2">🏨</span> ${dest.hotel}
+                                </div>
+                                <div class="flex items-center text-xs text-stone-600">
+                                    <span class="w-5 text-center mr-2">✈️</span> ${dest.logistics}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-stone-100 flex justify-between items-center">
+                            <span class="text-[10px] text-stone-400">Presupuesto Est.</span>
+                            <span class="font-bold text-base text-stone-800">${dest.budgetDisplay}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('comparisonTableBody');
+            tbody.innerHTML = '';
+            const sorted = [...destinations].sort((a,b) => b.budgetAvg - a.budgetAvg);
+            sorted.forEach(dest => {
+                const tr = document.createElement('tr');
+                tr.className = "bg-white border-b hover:bg-stone-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-stone-900 whitespace-nowrap">${dest.emoji} ${dest.name}</td>
+                    <td class="px-6 py-4">${dest.profile}</td>
+                    <td class="px-6 py-4">${dest.hotel}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2 py-1 text-xs rounded-full ${dest.crowds > 75 ? 'bg-red-100 text-red-800' : (dest.crowds < 45 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800')}">
+                            ${dest.crowds}%
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right font-semibold">${dest.budgetDisplay}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openModal(id) {
+            const dest = destinations.find(d => d.id === id);
+            if (!dest) return;
+            document.getElementById('modalTitle').innerText = `${dest.emoji} ${dest.name} - Detalle`;
+            const itineraryHtml = dest.itinerary.map((day, idx) => `
+                <div class="relative pl-8 pb-8 last:pb-0">
+                    ${idx !== dest.itinerary.length - 1 ? '<div class="timeline-line"></div>' : ''}
+                    <div class="absolute left-2 top-0 h-6 w-6 -ml-3 rounded-full border-4 border-white bg-orange-500 shadow z-10"></div>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-grow">
+                            <span class="text-xs font-bold text-orange-600 uppercase tracking-wide">Día ${day.day}</span>
+                            <h4 class="text-sm font-bold text-stone-800">${day.title}</h4>
+                            <p class="text-sm text-stone-600 mt-1">${day.desc}</p>
+                        </div>
+                        <div class="w-full sm:w-32 h-20 flex-shrink-0">
+                            <img src="${day.img}" alt="${day.title}" class="w-full h-full object-cover rounded-lg shadow-sm border border-stone-200">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            const prosHtml = dest.pros.map(p => `<li class="flex items-start"><span class="mr-2 text-green-500">✔</span>${p}</li>`).join('');
+            const consHtml = dest.cons.map(c => `<li class="flex items-start"><span class="mr-2 text-red-500">✖</span>${c}</li>`).join('');
+
+            document.getElementById('modalContent').innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 space-y-6">
+                        <img src="${dest.img}" alt="${dest.hotel}" class="w-full h-40 object-cover rounded-lg shadow-sm">
+                        <div class="bg-stone-50 p-4 rounded-lg border border-stone-200">
+                            <h4 class="font-bold text-stone-700 mb-2 border-b border-stone-200 pb-2 text-xs uppercase">Perfil</h4>
+                            <p class="text-sm"><strong>Hotel:</strong> ${dest.hotel}</p>
+                            <p class="text-sm"><strong>Logística:</strong> ${dest.logistics}</p>
+                        </div>
+                        <div class="bg-stone-50 p-4 rounded-lg border border-stone-200">
+                            <h5 class="text-xs font-bold text-green-700 uppercase mb-2">Lo Bueno</h5>
+                            <ul class="text-xs text-stone-600 space-y-1 mb-4">${prosHtml}</ul>
+                            <h5 class="text-xs font-bold text-red-700 uppercase mb-2">Lo Malo</h5>
+                            <ul class="text-xs text-stone-600 space-y-1">${consHtml}</ul>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <h4 class="font-bold text-stone-800 mb-6 flex items-center"><span class="text-xl mr-2">📅</span> Itinerario Detallado</h4>
+                        <div class="space-y-4">
+                            ${itineraryHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('detailModal').classList.add('hidden'); }
+        function filterDestinations() { renderCards(document.getElementById('countryFilter').value, document.getElementById('vibeFilter').value); }
+        function scrollToSection(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); }
+
+        window.onload = function() { initCharts(); renderCards(); renderTable(); };
+        document.addEventListener('keydown', e => { if (e.key === "Escape") closeModal(); });
+    </script>
+</body>
+</html>
